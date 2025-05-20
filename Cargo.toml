@@ -23,3 +23,10 @@ toml = "0.8.22"
 url = "1"
 url_serde = "0.2"
 v_htmlescape = "0.15.8"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
