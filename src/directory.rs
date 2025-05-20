@@ -137,14 +137,21 @@ pub fn directory_listing(dir: &Directory, req: &HttpRequest) -> Result<ServiceRe
                     --accent: #81a1c1;
                     --muted: #888;
                     --border: #333;
+                    --hover: #1b1b1b;
+                    --active: #2c2c2c;
                 }}
 
                 * {{ 
-                    box-sizing: border-box; margin: 0; padding: 0; 
+                    box-sizing: border-box; 
+                    margin: 0; 
+                    padding: 0; 
                 }}
                 
                 body {{ 
-                    background: var(--bg); color: var(--fg); font-family: system-ui, sans-serif; padding: 1rem; 
+                    background: var(--bg); 
+                    color: var(--fg); 
+                    font-family: system-ui, sans-serif; 
+                    padding: 1rem 0; 
                 }}
                 
                 .header {{
@@ -164,9 +171,15 @@ pub fn directory_listing(dir: &Directory, req: &HttpRequest) -> Result<ServiceRe
                 li {{ 
                     display: flex; 
                     align-items: center; 
-                    padding: 0.5rem 0; 
-                    border-bottom: 
-                    1px solid var(--border); 
+                    padding: 0.5rem 1rem; 
+                    border-bottom: 1px solid var(--border); 
+                    transition: 0.33s;
+                }}
+                li:hover {{
+                    background-color: var(--hover);
+                }}
+                li:active {{
+                    background-color: var(--active);
                 }}
                 
                 .emoji {{ 
