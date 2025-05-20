@@ -24,7 +24,8 @@ jobs:
         run: cargo build --release
 
       - name: upload binary
-        uses: actions/upload-artifact@v3
+        id: upload
+        uses: actions/upload-artifact@v4
         with:
           name: mediaserver
           path: target/release/mediaserver
