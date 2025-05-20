@@ -88,9 +88,7 @@ pub async fn upload(
 
 fn get_file_extension(file: &TempFile) -> &str {
     let file_name = file
-        .file_name
-        .as_ref()
-        .map(|s| s.as_str())
+        .file_name.as_deref()
         .unwrap_or("unnamed");
 
     Path::new(file_name)

@@ -84,7 +84,7 @@ async fn main() -> io::Result<()> {
                     MultipartFormConfig::default()
                         .total_limit(config_closure.storage.max_file_size_bytes),
                 )
-                .app_data(TempFileConfig::default().directory(&config_closure.get_temp_path()))
+                .app_data(TempFileConfig::default().directory(config_closure.get_temp_path()))
                 .route("/", web::get().to(index_redirect))
                 .route("/upload", web::put().to(upload::upload));
 
@@ -92,13 +92,8 @@ async fn main() -> io::Result<()> {
             for namespace in &config_closure.namespaces {
                 let mut files = Files::new(
                     namespace.0,
-                    namespace.1.get_path(&config_closure).to_str().expect(
-                        format!(
-                            "should be able to convert path of namespace {} to str",
-                            namespace.0
-                        )
-                        .as_str(),
-                    ),
+                    namespace.1.get_path(&config_closure).to_str().unwrap_or_else(|| panic!("should be able to convert path of namespace {} to str",
+                            namespace.0)),
                 );
 
                 if namespace.1.file_listing.show {

@@ -48,7 +48,7 @@ fn sorted_entries(dir: &Directory) -> io::Result<Vec<fs::DirEntry>> {
 pub fn directory_listing(dir: &Directory, req: &HttpRequest) -> Result<ServiceResponse, io::Error> {
     let config: &Data<Config> = req
         .app_data::<Data<Config>>()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Missing Config"))?;
+        .ok_or_else(|| io::Error::other("Missing Config"))?;
     let dir_entries = sorted_entries(dir)?;
 
     let back_link: Option<String> = {
