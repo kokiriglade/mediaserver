@@ -1,0 +1,30 @@
+name: Rust Linux Release Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
+
+      - name: set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: build in release mode
+        run: cargo build --release
+
+      - name: upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: mediaserver
+          path: target/release/mediaserver
