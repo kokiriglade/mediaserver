@@ -159,6 +159,7 @@ pub fn directory_listing(dir: &Directory, req: &HttpRequest) -> Result<ServiceRe
                     align-items: center;
                     justify-content: space-between;
                     margin-bottom: 1rem;
+                    padding: 0 1rem;
                 }}
                 .header h1 {{ 
                     font-size: 1.5rem;
