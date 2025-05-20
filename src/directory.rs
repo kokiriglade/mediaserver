@@ -12,6 +12,8 @@ const DIRECTORY_EMOJI: &str = "📂";
 
 const DEFAULT_FILE_EMOJI: &str = "❓";
 
+// todo moving this to config would be nice.
+// just unsure how to access config from directory rendering :(
 const FILE_EXT_EMOJI_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
     "png" => "🖼️",
     "jpg" => "🖼️",
@@ -71,7 +73,7 @@ fn sorted_entries(dir: &Directory) -> io::Result<Vec<fs::DirEntry>> {
             .and_then(|m| m.modified().ok())
             .unwrap_or(SystemTime::UNIX_EPOCH);
 
-        Reverse((modified, is_file))
+        (is_file, Reverse(modified))
     });
 
     Ok(entries)
