@@ -1,47 +1,13 @@
 use actix_files::Directory;
-use actix_web::{HttpRequest, HttpResponse, dev::ServiceResponse};
+use actix_web::{HttpRequest, HttpResponse, dev::ServiceResponse, web::Data};
 use bytesize::ByteSize;
 use chrono::{DateTime, Utc};
 use num_format::{Locale, ToFormattedString};
 use percent_encoding::{CONTROLS, utf8_percent_encode};
-use phf::phf_map;
 use std::{cmp::Reverse, fs, io, path::Path, time::SystemTime};
 use v_htmlescape::escape as escape_html_entity;
 
-const DIRECTORY_EMOJI: &str = "📂";
-
-const DEFAULT_FILE_EMOJI: &str = "❓";
-
-// todo moving this to config would be nice.
-// just unsure how to access config from directory rendering :(
-const FILE_EXT_EMOJI_TABLE: phf::Map<&'static str, &'static str> = phf_map! {
-    "png" => "🖼️",
-    "jpg" => "🖼️",
-    "jpeg" => "🖼️",
-    "webp" => "🖼️",
-    "gif" => "🖼️",
-    "avif" => "🖼️",
-    "ciff" => "🖼️", // Custom Image File Format that I made ~4 years ago
-    "mp4" => "📺",
-    "zip" => "📦",
-    "tar" => "📦",
-    "rar" => "📦",
-    "7z" => "📦",
-    "gz" => "📦",
-    "mrpack" => "🕹️", // Minecraft modpack file
-    "md" => "📄",
-    "txt" => "📄",
-    "pdf" => "📄",
-    "docx" => "📄",
-    "log" => "📄",
-    "json" => "📄",
-    "jsonc" => "📄",
-    "jar" => "🍵",
-    "js" => "🧩",
-    "rs" => "🧩",
-    "css" => "👕",
-    "exe" => "💾"
-};
+use crate::config::Config;
 
 macro_rules! encode_file_url {
     ($path:expr) => {
@@ -80,6 +46,9 @@ fn sorted_entries(dir: &Directory) -> io::Result<Vec<fs::DirEntry>> {
 }
 
 pub fn directory_listing(dir: &Directory, req: &HttpRequest) -> Result<ServiceResponse, io::Error> {
+    let config: &Data<Config> = req
+        .app_data::<Data<Config>>()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Missing Config"))?;
     let dir_entries = sorted_entries(dir)?;
 
     let back_link: Option<String> = {
@@ -119,20 +88,10 @@ pub fn directory_listing(dir: &Directory, req: &HttpRequest) -> Result<ServiceRe
         let time_str = escape_html_entity(&raw_time);
 
         let is_dir = meta.is_dir();
-        let ext_string = entry
-            .path()
-            .extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("")
-            .to_string();
-        let emoji = if is_dir {
-            DIRECTORY_EMOJI
-        } else {
-            FILE_EXT_EMOJI_TABLE
-                .get(ext_string.as_str())
-                .cloned()
-                .unwrap_or(DEFAULT_FILE_EMOJI)
-        };
+        let emoji = config
+            .file_listing_render
+            .emoji
+            .resolve_emoji(&entry, &meta);
 
         let name_html = if is_dir {
             format!(
