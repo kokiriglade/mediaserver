@@ -5,23 +5,13 @@ mod routes;
 use actix_files::Files;
 use actix_multipart::form::{MultipartFormConfig, tempfile::TempFileConfig};
 use actix_web::{
-    App, HttpResponse, HttpServer,
-    http::header,
+    App, HttpServer, middleware,
     web::{self, Data},
 };
 use config::Config;
 use log::{LevelFilter, error, info};
 use render::directory_listing;
 use std::{fs, io};
-
-async fn index_redirect(cfg: Data<Config>) -> HttpResponse {
-    HttpResponse::TemporaryRedirect()
-        .insert_header((
-            header::LOCATION,
-            cfg.web_server.redirect_index_to.to_string(),
-        ))
-        .finish()
-}
 
 fn create_uploads_directory(config: &Data<Config>) -> io::Result<()> {
     let uploads_path = config.get_uploads_path();
@@ -51,9 +41,11 @@ fn create_uploads_directory(config: &Data<Config>) -> io::Result<()> {
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-        .filter_module("actix_server", LevelFilter::Off)
-        .init();
+    env_logger::Builder::from_env(
+        env_logger::Env::default().default_filter_or("info"),
+    )
+    .filter_module("actix_server", LevelFilter::Off)
+    .init();
 
     let config = Data::new(Config::read().unwrap_or_else(|e| {
         error!("Failed to read configuration: {}", e);
@@ -72,7 +64,8 @@ async fn main() -> io::Result<()> {
 
     create_uploads_directory(&config)?;
 
-    let bind_address = format!("{}:{}", config.web_server.host, config.web_server.port);
+    let bind_address =
+        format!("{}:{}", config.web_server.host, config.web_server.port);
 
     let server = HttpServer::new({
         let config_closure = config.clone();
@@ -84,7 +77,7 @@ async fn main() -> io::Result<()> {
                         .total_limit(config_closure.storage.max_file_size_bytes),
                 )
                 .app_data(TempFileConfig::default().directory(config_closure.get_temp_path()))
-                .route("/", web::get().to(index_redirect))
+                .route("/", web::get().to(routes::index_redirect))
                 .route("/upload", web::put().to(routes::upload));
 
             // attach a static file router for all namespaces
@@ -118,7 +111,7 @@ async fn main() -> io::Result<()> {
                 config_closure
                     .get_uploads_path()
                     .join(&config_closure.storage.default_namespace_fs_path),
-            ))
+            )).wrap(middleware::Compress::default())
         }
     })
     .bind(&bind_address)?;

@@ -23,6 +23,22 @@ pub struct ResponsePayload {
     error: Option<String>,
 }
 
+impl ResponsePayload {
+    pub fn of_link(url: Url) -> ResponsePayload {
+        Self {
+            link: Some(url),
+            error: None,
+        }
+    }
+
+    pub fn of_error(error_message: String) -> ResponsePayload {
+        Self {
+            link: None,
+            error: Some(error_message),
+        }
+    }
+}
+
 /// The file upload endpoint.
 pub async fn upload(
     cfg: Data<Config>,
@@ -32,24 +48,32 @@ pub async fn upload(
     let input_auth_key = &form.auth_key.0;
 
     // get the namespace definition and also authenticate
-    let namespace =
-        match NamespaceDefinition::auth(&cfg.namespaces, input_namespace, input_auth_key) {
-            Some(ns) => ns,
-            None => {
-                return HttpResponse::Unauthorized().json(ResponsePayload {
-                    link: None,
-                    error: Some("Failed to authenticate".to_string()),
-                });
-            }
-        };
+    let namespace = match NamespaceDefinition::auth(
+        &cfg.namespaces,
+        input_namespace,
+        input_auth_key,
+    ) {
+        Some(ns) => ns,
+        None => {
+            return HttpResponse::Unauthorized().json(
+                ResponsePayload::of_error("Failed to authenticate".to_string()),
+            );
+        }
+    };
 
-    let file_path = namespace.create_random_file_name(&cfg, get_file_extension(&form.file));
+    let file_path =
+        namespace.create_random_file_name(&cfg, get_file_extension(&form.file));
 
     if file_path.is_err() {
-        return HttpResponse::InternalServerError().json(ResponsePayload {
-            link: None,
-            error: Some("Failed to create path for uploaded file :(".to_string()),
-        });
+        error!(
+            "Failed to create path for uploaded file: {:?}",
+            file_path.err()
+        );
+        return HttpResponse::InternalServerError().json(
+            ResponsePayload::of_error(
+                "Failed to create path for uploaded file".to_string(),
+            ),
+        );
     }
 
     let file_path = file_path.unwrap();
@@ -61,35 +85,32 @@ pub async fn upload(
             "Failed to parsist uploaded file: {}",
             persist.err().unwrap()
         );
-        return HttpResponse::InternalServerError().json(ResponsePayload {
-            link: None,
-            error: Some("Failed to persist uploaded file :(".to_string()),
-        });
+        return HttpResponse::InternalServerError().json(
+            ResponsePayload::of_error(
+                "Failed to persist uploaded file".to_string(),
+            ),
+        );
     }
 
-    HttpResponse::Ok().json(ResponsePayload {
-        link: Some(
-            cfg.web_server
-                .listen_url
-                .join(format!("{}/", input_namespace).as_str())
-                .expect("should be able to join with input_namespace")
-                .join(
-                    file_path
-                        .file_name()
-                        .expect("should have a file name")
-                        .to_str()
-                        .expect("should be able to convert OsStr to str"),
-                )
-                .expect("should be able to join with file stem"),
-        ),
-        error: None,
-    })
+    HttpResponse::Ok().json(ResponsePayload::of_link(
+        cfg.web_server
+            .listen_url
+            .join(format!("{}/", input_namespace).as_str())
+            .expect("should be able to join with input_namespace")
+            .join(
+                file_path
+                    .file_name()
+                    .expect("should have a file name")
+                    .to_str()
+                    .expect("should be able to convert OsStr to str"),
+            )
+            .expect("should be able to join with file stem"),
+    ))
 }
 
+/// Extracts file extension from a [`TempFile`].
 fn get_file_extension(file: &TempFile) -> &str {
-    let file_name = file
-        .file_name.as_deref()
-        .unwrap_or("unnamed");
+    let file_name = file.file_name.as_deref().unwrap_or("unnamed");
 
     Path::new(file_name)
         .extension()

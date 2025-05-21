@@ -27,7 +27,10 @@ impl Default for Config {
             web_server: WebServerConfig::default(),
             file_listing_render: FancyRendererConfig::default(),
             storage: StorageConfig::default(),
-            namespaces: HashMap::from([("ferris".to_string(), NamespaceDefinition::default())]),
+            namespaces: HashMap::from([(
+                "ferris".to_string(),
+                NamespaceDefinition::default(),
+            )]),
         }
     }
 }
@@ -47,7 +50,11 @@ pub struct FancyRendererEmojis {
 }
 
 impl FancyRendererEmojis {
-    pub fn resolve_emoji(&self, dir_entry: &DirEntry, metadata: &Metadata) -> String {
+    pub fn resolve_emoji(
+        &self,
+        dir_entry: &DirEntry,
+        metadata: &Metadata,
+    ) -> String {
         let is_dir = metadata.is_dir();
         let ext_string = dir_entry
             .path()
@@ -158,9 +165,11 @@ impl Config {
             let serialized = toml::to_string_pretty(&Self::default())
                 .map_err(|e| ConfigError::TomlWrite { source: e })?;
 
-            fs::write(CONFIG_PATH, serialized).map_err(|e| ConfigError::IoWrite {
-                path: CONFIG_PATH.into(),
-                source: e,
+            fs::write(CONFIG_PATH, serialized).map_err(|e| {
+                ConfigError::IoWrite {
+                    path: CONFIG_PATH.into(),
+                    source: e,
+                }
             })?;
 
             info!("Done! Edit the config file and start again");
@@ -168,9 +177,11 @@ impl Config {
             std::process::exit(0);
         }
 
-        let content = fs::read_to_string(CONFIG_PATH).map_err(|e| ConfigError::IoRead {
-            path: CONFIG_PATH.into(),
-            source: e,
+        let content = fs::read_to_string(CONFIG_PATH).map_err(|e| {
+            ConfigError::IoRead {
+                path: CONFIG_PATH.into(),
+                source: e,
+            }
         })?;
 
         toml::from_str(&content).map_err(|e| ConfigError::TomlParse {
@@ -206,8 +217,10 @@ impl Default for WebServerConfig {
             port: 3000,
             listen_url: Url::from_str("http://localhost:3000")
                 .expect("default 'url' should be parseable"),
-            redirect_index_to: Url::from_str("http://github.com/kokiriglade/mediaserver")
-                .expect("default 'redirect_index_to' should be parseable"),
+            redirect_index_to: Url::from_str(
+                "http://github.com/kokiriglade/mediaserver",
+            )
+            .expect("default 'redirect_index_to' should be parseable"),
         }
     }
 }
@@ -304,7 +317,8 @@ impl NamespaceDefinition {
         loop {
             // create a candidate
             let candidate_name: String = create_random_string(length);
-            let candidate = base_dir.join(format!("{candidate_name}.{file_extension}"));
+            let candidate =
+                base_dir.join(format!("{candidate_name}.{file_extension}"));
 
             // attempt to reserve it atomically
             let open_result = fs::OpenOptions::new()
