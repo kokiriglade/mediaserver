@@ -1,0 +1,8 @@
+<li>
+    <span class="emoji">{{ emoji }} </span>
+    <span class="timestamp">{{ timestamp }}</span>
+    <a class="filename" href="{{ file_href }}">{{ file_name }}</a>
+    {% if !is_directory %}
+    <span class="size">{{ byte_size | safe }}</span>
+    {% endif %}
+</li>

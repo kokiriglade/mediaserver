@@ -1,5 +1,5 @@
 mod config;
-mod directory;
+mod render;
 mod routes;
 
 use actix_files::Files;
@@ -10,9 +10,8 @@ use actix_web::{
     web::{self, Data},
 };
 use config::Config;
-use directory::directory_listing;
 use log::{LevelFilter, error, info};
-use routes::upload;
+use render::directory_listing;
 use std::{fs, io};
 
 async fn index_redirect(cfg: Data<Config>) -> HttpResponse {
@@ -86,14 +85,22 @@ async fn main() -> io::Result<()> {
                 )
                 .app_data(TempFileConfig::default().directory(config_closure.get_temp_path()))
                 .route("/", web::get().to(index_redirect))
-                .route("/upload", web::put().to(upload::upload));
+                .route("/upload", web::put().to(routes::upload));
 
             // attach a static file router for all namespaces
             for namespace in &config_closure.namespaces {
                 let mut files = Files::new(
                     namespace.0,
-                    namespace.1.get_path(&config_closure).to_str().unwrap_or_else(|| panic!("should be able to convert path of namespace {} to str",
-                            namespace.0)),
+                    namespace
+                        .1
+                        .get_path(&config_closure)
+                        .to_str()
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "should be able to convert path of namespace {} to str",
+                                namespace.0
+                            )
+                        }),
                 );
 
                 if namespace.1.file_listing.show {

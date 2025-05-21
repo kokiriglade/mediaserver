@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index of {{ current_directory }} ({{ total_items }})</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --fg: #e0e0e0;
+            --accent: #81a1c1;
+            --muted: #888;
+            --border: #333;
+            --hover: #1b1b1b;
+            --active: #2c2c2c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: system-ui, sans-serif;
+            padding: 1rem 0;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding: 0 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border);
+            transition: 0.33s;
+        }
+
+        li:hover {
+            background-color: var(--hover);
+        }
+
+        li:active {
+            background-color: var(--active);
+        }
+
+        .emoji {
+            width: 2rem;
+            text-align: center;
+            user-select: none;
+        }
+
+        .timestamp {
+            width: 10rem;
+            flex-shrink: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .filename {
+            flex: 1;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .filename:hover {
+            text-decoration: underline;
+        }
+
+        .size {
+            margin-left: 1rem;
+            flex-shrink: 0;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .back {
+            margin-bottom: 1rem;
+        }
+
+        .back a {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            background: var(--border);
+            color: var(--fg);
+            text-decoration: none;
+            border-radius: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .back a:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Index of {{ current_directory }} ({{ total_items }} items)</h1>
+        <div class="back"><a href="{{ parent_dir_href }}">🔙 Parent directory</a></div>
+    </div>
+    <ul>
+        {% for listing in individual_listings %}
+        {{ listing | safe }}
+        {% endfor %}
+    </ul>
+</body>
+
+</html>

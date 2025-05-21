@@ -1,1 +1,3 @@
-pub mod upload;
+mod upload;
+
+pub use upload::upload;
