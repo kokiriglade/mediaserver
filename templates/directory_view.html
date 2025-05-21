@@ -116,7 +116,9 @@
 <body>
     <div class="header">
         <h1>Index of {{ current_directory }} ({{ total_items }} items)</h1>
+        {% if parent_dir_href != "" %}
         <div class="back"><a href="{{ parent_dir_href }}">🔙 Parent directory</a></div>
+        {% endif %}
     </div>
     <ul>
         {% for listing in individual_listings %}
