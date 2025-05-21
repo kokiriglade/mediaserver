@@ -11,33 +11,7 @@ use actix_web::{
 use config::Config;
 use log::{LevelFilter, error, info};
 use render::directory_listing;
-use std::{fs, io};
-
-fn create_uploads_directory(config: &Data<Config>) -> io::Result<()> {
-    let uploads_path = config.get_uploads_path();
-    if !fs::exists(&uploads_path)? {
-        fs::create_dir_all(&uploads_path)?;
-    }
-
-    let temp_path = config.get_temp_path();
-    if !fs::exists(&temp_path)? {
-        fs::create_dir(temp_path)?;
-    }
-
-    for namespace in &config.namespaces {
-        let namespace_path = namespace.1.get_path(config);
-
-        if !fs::exists(&namespace_path)? {
-            fs::create_dir(&namespace_path)?;
-            info!(
-                "Created namespace directory: '{}'",
-                &namespace_path.display()
-            );
-        }
-    }
-
-    Ok(())
-}
+use std::io;
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -62,7 +36,7 @@ async fn main() -> io::Result<()> {
         }
     );
 
-    create_uploads_directory(&config)?;
+    config.create_uploads_directory()?;
 
     let bind_address =
         format!("{}:{}", config.web_server.host, config.web_server.port);

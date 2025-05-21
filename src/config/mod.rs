@@ -9,7 +9,7 @@ mod web_server;
 
 use log::info;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{collections::HashMap, fs, io, path::PathBuf};
 
 pub use error::ConfigError;
 pub use fancy_rendering::FancyRendererConfig;
@@ -82,6 +82,32 @@ impl Config {
             path: CONFIG_PATH.into(),
             source: e,
         })
+    }
+
+    pub fn create_uploads_directory(&self) -> io::Result<()> {
+        let uploads_path: PathBuf = self.get_uploads_path();
+        if !fs::exists(&uploads_path)? {
+            fs::create_dir_all(&uploads_path)?;
+        }
+
+        let temp_path = self.get_temp_path();
+        if !fs::exists(&temp_path)? {
+            fs::create_dir(temp_path)?;
+        }
+
+        for namespace in &self.namespaces {
+            let namespace_path = namespace.1.get_path(self);
+
+            if !fs::exists(&namespace_path)? {
+                fs::create_dir(&namespace_path)?;
+                info!(
+                    "Created namespace directory: '{}'",
+                    &namespace_path.display()
+                );
+            }
+        }
+
+        Ok(())
     }
 
     pub fn get_uploads_path(&self) -> PathBuf {
