@@ -104,10 +104,7 @@ impl Default for NamespaceDefinition {
             }
             .generate(),
             file_listing: FileListingConfig::default(),
-            file_name_generator: StringGenerator::Random {
-                length: 12,
-                max_attempts_before_grow: 0,
-            },
+            file_name_generator: StringGenerator::default(),
         }
     }
 }
