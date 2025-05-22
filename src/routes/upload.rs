@@ -44,13 +44,13 @@ pub async fn upload(
     cfg: Data<Config>,
     MultipartForm(form): MultipartForm<UploadData>,
 ) -> HttpResponse {
-    let input_namespace = &form.namespace.0;
+    let input_namespace = (&form.namespace.0).replace("..", "");
     let input_auth_key = &form.auth_key.0;
 
     // get the namespace definition and also authenticate
     let namespace = match NamespaceDefinition::auth(
         &cfg.namespaces,
-        input_namespace,
+        &input_namespace,
         input_auth_key,
     ) {
         Some(ns) => ns,
@@ -77,6 +77,16 @@ pub async fn upload(
     }
 
     let file_path = file_path.unwrap();
+
+    let namespace_path = namespace.get_path(&cfg);
+    if !file_path.starts_with(&namespace_path) {
+        error!(
+            "Path traversal detected. namespace: {}, file_path: {:?}",
+            &form.namespace.0, file_path
+        );
+        return HttpResponse::BadRequest()
+            .json(ResponsePayload::of_error("Invalid file path".to_string()));
+    }
 
     let persist = form.file.file.persist(&file_path);
 
